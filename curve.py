@@ -90,8 +90,55 @@ def solveCurve(path):
     plt.plot(result[1][0:255], range(0, 255), 'ro')
     plt.show()
 
-    return 
+    return result[0:3][0:255] 
 
+# using reconstruct curve
+def radianceMap(path, curve):
+    exp_time = [] 
+    cv_imgs = []
+    num = 0
+
+    #load images to cv format
+    for imgName in glob.glob(path+'/*.jpg'):
+        img = Image.open(imgName)
+        cv_img = cv2.imread(imgName)
+
+        # split b, g ,r 
+        cv_imgs.append(cv2.split(cv_img))
+
+        # extract exposure time]
+        imgInfo = img._getexif();
+        for tag, value in imgInfo.items():
+            if( tag == 33434 ):
+                exp_time.append(value[0]/float(value[1]))
+                break
+
+        num = num + 1
+
+    rol = len(cv_imgs[0][0])
+    col = len(cv_imgs[0][0][0])
+    numpy_map = [  numpy.zeros((rol, col)), numpy.zeros((rol, col)), numpy.zeros((rol, col)) ]
+    # b, g ,r
+    for color in [0, 1, 2]:
+        for r in range(0, rol):
+            print r
+            for c in range(0, col):
+                ln_E = 0
+                sum_w = 1
+
+                # caculate weighted average
+                for pic in range(0, num):
+                    z = cv_imgs[pic][color][r][c]
+#                    print z
+                    ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
+                    sum_w += w(z)
+                numpy_map[color][r][c] = ln_E/sum_w
+
+
+    # merge 3 channels back
+    cv_img_result = cv2.merge(numpy_map)
+    cv.SaveImage('outfile.jpg', cv.fromarray(cv_img_result))
+    cv.ShowImage('test', cv.fromarray(cv_img_result))
 
 
 
@@ -100,7 +147,9 @@ if( len(sys.argv) != 2 ) :
     print 'solveCurve <image path>'
     quit()
 
-solveCurve(str(sys.argv[1]))
+result = solveCurve(str(sys.argv[1]))
+#result = numpy.zeros((256, 1))
+radianceMap(str(sys.argv[1]), result)
 
 #end main
        
