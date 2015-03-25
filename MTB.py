@@ -60,6 +60,7 @@ def align(num_frame, ref_frame, level):
         for color, freq in histo.iteritems():
             if (freq+acc) >= target:
                 threshold.append(color)
+                break
             else:
                 acc += freq
     
@@ -137,14 +138,14 @@ def align(num_frame, ref_frame, level):
                         img_BW[idx][row,col] = img_BW[idx][row-direc[0],col-direc[1]]
         
         # Write aligned image into JPG file
-        if idx > 9:
-            filename = 'align_img' + str(idx) + '.jpg'
+        if idx+1 > 9:
+            filename = 'align_img' + str(idx+1) + '.jpg'
         else:
-            filename = 'align_img0' + str(idx) + '.jpg'
+            filename = 'align_img0' + str(idx+1) + '.jpg'
         cv.SaveImage(filename, cv.fromarray(img_BW[idx]))
     #    cv2.namedWindow("alignment")
     #    cv2.imshow("alignment", image)
     #    cv2.waitKey(0)
     #cv2.destroyAllWindows()
 
-align()
+align(10, 5, 5)
