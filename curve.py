@@ -7,6 +7,7 @@ import sys
 import numpy
 import random
 import math
+import time
 
 #for plotting
 import matplotlib.pyplot as plt
@@ -87,8 +88,8 @@ def solveCurve(path):
 
         
     print result[1][0:255], result[1][127:128]
-    plt.plot(result[1][0:255], range(0, 255), 'ro')
-    plt.show()
+    #plt.plot(result[1][0:255], range(0, 255), 'ro')
+    #plt.show()
 
     return result[0:3][0:255] 
 
@@ -125,13 +126,14 @@ def radianceMap(path, curve):
             for c in range(0, col):
                 ln_E = 0
                 sum_w = 1
-
+                #print r, c
                 # caculate weighted average
                 for pic in range(0, num):
                     z = cv_imgs[pic][color][r][c]
 #                    print z
-                    ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
+                    #ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
                     sum_w += w(z)
+                    #print z
                 numpy_map[color][r][c] = ln_E/sum_w
 
 
@@ -139,6 +141,7 @@ def radianceMap(path, curve):
     cv_img_result = cv2.merge(numpy_map)
     cv.SaveImage('outfile.jpg', cv.fromarray(cv_img_result))
     cv.ShowImage('test', cv.fromarray(cv_img_result))
+    return numpy_map
 
 
 
