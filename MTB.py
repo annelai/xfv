@@ -2,12 +2,11 @@ import cv2
 import cv
 import numpy as np
 
-num_frame = 10
-ref_frame = 5
-threshold = []
-level = 5
+#num_frame = 10
+#ref_frame = 5
+#level = 5
 
-def diff(a,b,bias_x,bias_y,l):
+def diff(a, b, bias_x, bias_y, l):
     cost = 0.0
     w = 0
     rows, cols = a.shape
@@ -20,7 +19,7 @@ def diff(a,b,bias_x,bias_y,l):
     return cost/(w*1.0)
 
 
-def align():
+def align(num_frame, ref_frame, level):
     #----- Load Image
     img = []
     img_Y = []
@@ -45,6 +44,7 @@ def align():
     
     print 'Finding median thresholding value...'
     #----- Median thresholding
+    threshold = []
     for image in img_Y:
         histo = {}
         rows, cols = image.shape
