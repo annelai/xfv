@@ -10,7 +10,7 @@ if( len(sys.argv) != 5 ) :
     print 'hdr <image_path> <num_frame> <ref_frame> <level>'
     quit()
 
-image_path = sys.argv[1]    
+image_path = str(sys.argv[1])    
 num_frame = int(sys.argv[2])
 ref_frame = int(sys.argv[3])
 level = int(level)
@@ -19,6 +19,5 @@ if ref_frame >= num_frame:
     quit()
 level = int(sys.argv[4])
 result = solveCurve(str(image_path))
-#result = numpy.zeros((256, 1))
-radianceMap(str(image_path), result)
 align(num_frame, ref_frame, level)
+radianceMap(image_path, result)

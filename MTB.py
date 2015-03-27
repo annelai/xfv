@@ -2,12 +2,7 @@ import cv2
 import cv
 import numpy as np
 
-num_frame = 10
-ref_frame = 5
-threshold = []
-level = 5
-
-def diff(a,b,bias_x,bias_y,l):
+def diff(a, b, bias_x, bias_y, l):
     cost = 0.0
     w = 0
     rows, cols = a.shape
@@ -20,7 +15,7 @@ def diff(a,b,bias_x,bias_y,l):
     return cost/(w*1.0)
 
 
-def align():
+def align(num_frame, ref_frame, level):
     #----- Load Image
     img = []
     img_Y = []
@@ -45,6 +40,7 @@ def align():
     
     print 'Finding median thresholding value...'
     #----- Median thresholding
+    threshold = []
     for image in img_Y:
         histo = {}
         rows, cols = image.shape
@@ -60,6 +56,7 @@ def align():
         for color, freq in histo.iteritems():
             if (freq+acc) >= target:
                 threshold.append(color)
+                break
             else:
                 acc += freq
     
@@ -137,14 +134,17 @@ def align():
                         img_BW[idx][row,col] = img_BW[idx][row-direc[0],col-direc[1]]
         
         # Write aligned image into JPG file
-        if idx > 9:
-            filename = 'align_img' + str(idx) + '.jpg'
+        if idx+1 > 9:
+            filename = 'align_img' + str(idx+1) + '.jpg'
         else:
-            filename = 'align_img0' + str(idx) + '.jpg'
-        cv.SaveImage(filename, cv.fromarray(img_BW[idx]))
-    #    cv2.namedWindow("alignment")
-    #    cv2.imshow("alignment", image)
-    #    cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+            filename = 'align_img0' + str(idx+1) + '.jpg'
+        cv2.imwrite(filename, img_BW[idx])
+    #   cv2.namedWindow("alignment")
+    #   cv2.imshow("alignment", image)
+    #   cv2.waitKey(0)
+    #   cv2.destroyAllWindows()
+def main():
+    align(10, 5, 5)
 
-align()
+if __name__ == '__main__':
+    main()
