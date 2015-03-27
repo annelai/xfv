@@ -1,4 +1,3 @@
-import cv
 import cv2
 from PIL import Image
 from PIL.ExifTags import TAGS
@@ -29,6 +28,18 @@ def w(z):
     if z>128 : return 255-z
     return z
 
+# for numpy adding lnE
+def calE(curve, exp, *points):
+    assert( len(exp) == len(points) )
+    tmp = 0
+    w = 0 
+    for i in range(len(points)):
+        tmp += w(point[i]) * (curve[point[i]] - math.log(exp[i]))
+        w += w(point[i])
+    return tmp/w
+
+    
+
 
 # solve non-linear curve
 # images should be in path with jpg format
@@ -56,6 +67,7 @@ def solveCurve(path):
     
     # empty matrix
     result = [ numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)) ]
+    tmp = numpy.zeros((256+points, 1))
     
     # fill in the coefficients
     for color in [0, 1, 2]:
@@ -80,16 +92,13 @@ def solveCurve(path):
             mat_a[num*points+smooth][smooth] = -2*smoothness*w(z)
             mat_a[num*points+smooth][smooth+1] = smoothness*w(z)
 
-        mat_a_cv = cv.fromarray(mat_a)
-        mat_b_cv = cv.fromarray(mat_b)
-        result_cv = [  cv.fromarray(result[0]), cv.fromarray(result[1]), cv.fromarray(result[2]) ]
-        cv.Solve(mat_a_cv, mat_b_cv, result_cv[color])
+        err, result[color] = cv2.solve(mat_a, mat_b, tmp,cv2.DECOMP_QR )
 
 
         
     print result[1][0:255], result[1][127:128]
-    #plt.plot(result[1][0:255], range(0, 255), 'ro')
-    #plt.show()
+    plt.plot(result[1][0:255], range(0, 255), 'ro')
+    plt.show()
 
     return result[0:3][0:255] 
 
@@ -120,27 +129,35 @@ def radianceMap(path, curve):
     col = len(cv_imgs[0][0][0])
     numpy_map = [  numpy.zeros((rol, col)), numpy.zeros((rol, col)), numpy.zeros((rol, col)) ]
     # b, g ,r
+#    for color in [0, 1, 2]:
+#        for r in range(0, rol):
+#            print r
+#            for c in range(0, col):
+#                ln_E = 0
+#                sum_w = 1
+#                #print r, c
+#                # caculate weighted average
+#                for pic in range(0, num):
+#                    z = cv_imgs[pic][color][r][c]
+##                    print z
+#                    #ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
+#                    sum_w += w(z)
+#                    #print z
+#                numpy_map[color][r][c] = ln_E/sum_w
+    rad = []
     for color in [0, 1, 2]:
-        for r in range(0, rol):
-            print r
-            for c in range(0, col):
-                ln_E = 0
-                sum_w = 1
-                #print r, c
-                # caculate weighted average
-                for pic in range(0, num):
-                    z = cv_imgs[pic][color][r][c]
-#                    print z
-                    #ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
-                    sum_w += w(z)
-                    #print z
-                numpy_map[color][r][c] = ln_E/sum_w
-
+        vfunc =  numpy.vectorize(calE)
+        rad[color] = vfunc( curve[color], exp_time, cv_imgs[0][color], cv_imgs[1][color], \
+                                                    cv_imgs[2][color], cv_imgs[3][color], \
+                                                    cv_imgs[4][color], cv_imgs[5][color], \
+                                                    cv_imgs[6][color], cv_imgs[7][color], \
+                                                    cv_imgs[8][color], cv_imgs[9][color], \
+                                                    cv_imgs[10][color], cv_imgs[11][color], \
+                                                    cv_imgs[12][color])
 
     # merge 3 channels back
     cv_img_result = cv2.merge(numpy_map)
-    cv.SaveImage('outfile.jpg', cv.fromarray(cv_img_result))
-    cv.ShowImage('test', cv.fromarray(cv_img_result))
+    cv2.imwrite('outfile.jpg', cv_img_result)
     return numpy_map
 
 
