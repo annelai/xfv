@@ -2,10 +2,6 @@ import cv2
 import cv
 import numpy as np
 
-#num_frame = 10
-#ref_frame = 5
-#level = 5
-
 def diff(a, b, bias_x, bias_y, l):
     cost = 0.0
     w = 0
@@ -143,9 +139,12 @@ def align(num_frame, ref_frame, level):
         else:
             filename = 'align_img0' + str(idx+1) + '.jpg'
         cv.SaveImage(filename, cv.fromarray(img_BW[idx]))
-    #    cv2.namedWindow("alignment")
-    #    cv2.imshow("alignment", image)
-    #    cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+    #   cv2.namedWindow("alignment")
+    #   cv2.imshow("alignment", image)
+    #   cv2.waitKey(0)
+    #   cv2.destroyAllWindows()
+def main():
+    align(10, 5, 5)
 
-align(10, 5, 5)
+if __name__ == '__main__':
+    main()
