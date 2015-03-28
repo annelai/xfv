@@ -8,45 +8,45 @@ import random
 import math
 import time
 
-#for plotting
+### for plotting
 import matplotlib.pyplot as plt
 
-points = 100 # points in each images
-point = []   # point coordinate
-smoothness = math.sqrt(30)  # curve smoothness
+points = 100 ### points in each images
+point = []   ### point coordinate
+smoothness = math.sqrt(30)  ### curve smoothness
 
-# random generate points
+### random generate points
 for i in range(0, points):
     row = int(random.random()*768)
     col = int(random.random()*1024)
     point.append([row,col])
 
-# weight function 
+### weight function 
 def w(z):
     if z<0 : return 0
     if z>255 : return 255
     if z>128 : return 255-z
     return z
 
-# divide function ( prevent weight sum = 0 )
+### divide function ( prevent weight sum = 0 )
 def divide(rad, w_sum):
     if w_sum == 0:
         return rad
     return rad/w_sum
 
-# simple tone mapping
+### simple tone mapping
 def tone_map(imgs):
     result = []
     for color in [0, 1, 2]:
         img = imgs[color]
-        # from (min, max) -> (0, max-min)
+        ### from (min, max) -> (0, max-min)
         min_val = numpy.amin(img)
         img -= min_val
-        # from (0, max-min) -> (0, 255)
+        ### from (0, max-min) -> (0, 255)
         max_val = numpy.amax(img)
         img /= max_val 
         img *= 255
-        # truncate to int
+        ### truncate to int
         img.astype(numpy.int64)
         result.append(img)
 
@@ -56,22 +56,22 @@ def tone_map(imgs):
     
 
 
-# solve non-linear curve
-# images should be in path with jpg format
+### solve non-linear curve
+### images should be in path with jpg format
 def solveCurve(path):
     exp_time = [] 
     cv_imgs = []
     num = 0
 
-    #load images to cv format
+    ### load images to cv format
     for imgName in glob.glob(path+'/*.jpg'):
         img = Image.open(imgName)
         cv_img = cv2.imread(imgName)
 
-        # split b, g ,r 
+        ### split b, g ,r 
         cv_imgs.append(cv2.split(cv_img))
 
-        # extract exposure time
+        ### extract exposure time
         imgInfo = img._getexif();
         for tag, value in imgInfo.items():
             if( tag == 33434 ):
@@ -80,11 +80,11 @@ def solveCurve(path):
 
         num = num + 1
     
-    # empty matrix
+    ### empty matrix
     result = [ numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)) ]
     tmp = numpy.zeros((256+points, 1))
     
-    # fill in the coefficients
+    ### fill in the coefficients
     for color in [0, 1, 2]:
         mat_a = numpy.zeros((num*points+256, 256+points))
         mat_b = numpy.zeros((num*points+256, 1))
@@ -98,10 +98,10 @@ def solveCurve(path):
                 print exp_time[pic]
                 mat_b[pic*points+idx][0] = weight*math.log(exp_time[pic])
 
-        # g(127) = 0
+        ### g(127) = 0
         mat_a[num*points][127] = 1
 
-        # for smoothness
+        ### for smoothness
         for smooth in range(1, 254):
             mat_a[num*points+smooth][smooth-1] = smoothness*w(z)
             mat_a[num*points+smooth][smooth] = -2*smoothness*w(z)
@@ -117,21 +117,21 @@ def solveCurve(path):
 
     return result[0:3][0:255] 
 
-# using reconstruct curve
+### using reconstruct curve
 def radianceMap(path, curve):
     exp_time = [] 
     cv_imgs = []
     num = 0
 
-    #load images to cv format
+    ### load images to cv format
     for imgName in glob.glob(path+'/*.jpg'):
         img = Image.open(imgName)
         cv_img = cv2.imread(imgName)
 
-        # split b, g ,r 
+        ### split b, g ,r 
         cv_imgs.append(cv2.split(cv_img))
 
-        # extract exposure time]
+        ### extract exposure time]
         imgInfo = img._getexif();
         for tag, value in imgInfo.items():
             if( tag == 33434 ):
@@ -150,7 +150,7 @@ def radianceMap(path, curve):
         curve_np = numpy.asarray(curve[color])
         for pic in range(num):
             w_vec = numpy.vectorize(w)
-            # from (col, row, 1) to (col, row)
+            ### from (col, row, 1) to (col, row)
             z_refactor = numpy.reshape(curve_np[cv_imgs[pic][color]], (row, col))
             rad[color] += w_vec(cv_imgs[pic][color])*( z_refactor - math.log(exp_time[pic]) )
             w_sum += w_vec(cv_imgs[pic][color])
@@ -161,7 +161,7 @@ def radianceMap(path, curve):
         print 'max = ', numpy.amax(rad[color])
 
 
-    # merge 3 channels back
+    ### merge 3 channels back
     exp_vec = numpy.vectorize(math.exp)
     hdr = exp_vec(rad)
     print 'hdr.shape = ', hdr.shape
@@ -173,15 +173,14 @@ def radianceMap(path, curve):
 
 
 
-#main function 
+### main function 
 if( len(sys.argv) != 2 ) :
     print 'solveCurve <image path>'
     quit()
 
 result = solveCurve(str(sys.argv[1]))
-#result = numpy.zeros((256, 1))
 radianceMap(str(sys.argv[1]), result)
 
-#end main
+### end main
        
 
