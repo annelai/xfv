@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 points = 100 # points in each images
 point = []   # point coordinate
-smoothness = math.sqrt(2)  # curve smoothness
+smoothness = math.sqrt(30)  # curve smoothness
 
 # random generate points
 for i in range(0, points):
@@ -28,16 +28,31 @@ def w(z):
     if z>128 : return 255-z
     return z
 
-# for numpy adding lnE
-def calE(curve, exp, *points):
-    assert( len(exp) == len(points) )
-    tmp = 0
-    w = 0 
-    for i in range(len(points)):
-        tmp += w(point[i]) * (curve[point[i]] - math.log(exp[i]))
-        w += w(point[i])
-    return tmp/w
+# divide function ( prevent weight sum = 0 )
+def divide(rad, w_sum):
+    if w_sum == 0:
+        return rad
+    return rad/w_sum
 
+# simple tone mapping
+def tone_map(imgs):
+    result = []
+    for color in [0, 1, 2]:
+        img = imgs[color]
+        # from (min, max) -> (0, max-min)
+        min_val = numpy.amin(img)
+        img -= min_val
+        # from (0, max-min) -> (0, 255)
+        max_val = numpy.amax(img)
+        img /= max_val 
+        img *= 255
+        # truncate to int
+        img.astype(numpy.int64)
+        result.append(img)
+
+        print 'min = ', min_val, 'max = ', max_val
+        print 'after: min = ', numpy.amin(img), ', max = ', numpy.amax(img)
+    return numpy.array(result) 
     
 
 
@@ -97,8 +112,8 @@ def solveCurve(path):
 
         
     print result[1][0:255], result[1][127:128]
-    plt.plot(result[1][0:255], range(0, 255), 'ro')
-    plt.show()
+    #plt.plot(result[1][0:255], range(0, 255), 'ro')
+    #plt.show()
 
     return result[0:3][0:255] 
 
@@ -124,41 +139,37 @@ def radianceMap(path, curve):
                 break
 
         num = num + 1
-
-    rol = len(cv_imgs[0][0])
+    print 'cv_imgs.shape = ' , ( len(cv_imgs), len(cv_imgs[0]), len(cv_imgs[0][0]), len(cv_imgs[0][0][0]))
+    row = len(cv_imgs[0][0])
     col = len(cv_imgs[0][0][0])
-    numpy_map = [  numpy.zeros((rol, col)), numpy.zeros((rol, col)), numpy.zeros((rol, col)) ]
-    # b, g ,r
-#    for color in [0, 1, 2]:
-#        for r in range(0, rol):
-#            print r
-#            for c in range(0, col):
-#                ln_E = 0
-#                sum_w = 1
-#                #print r, c
-#                # caculate weighted average
-#                for pic in range(0, num):
-#                    z = cv_imgs[pic][color][r][c]
-##                    print z
-#                    #ln_E += w(z)*(curve[color][z]-math.log(exp_time[pic]))
-#                    sum_w += w(z)
-#                    #print z
-#                numpy_map[color][r][c] = ln_E/sum_w
-    rad = []
+    rad = [  numpy.zeros((row, col)), numpy.zeros((row, col)), numpy.zeros((row, col)) ]
+    w_sum = numpy.zeros((row, col))
+
+    print 'num = ', num
     for color in [0, 1, 2]:
-        vfunc =  numpy.vectorize(calE)
-        rad[color] = vfunc( curve[color], exp_time, cv_imgs[0][color], cv_imgs[1][color], \
-                                                    cv_imgs[2][color], cv_imgs[3][color], \
-                                                    cv_imgs[4][color], cv_imgs[5][color], \
-                                                    cv_imgs[6][color], cv_imgs[7][color], \
-                                                    cv_imgs[8][color], cv_imgs[9][color], \
-                                                    cv_imgs[10][color], cv_imgs[11][color], \
-                                                    cv_imgs[12][color])
+        curve_np = numpy.asarray(curve[color])
+        for pic in range(num):
+            w_vec = numpy.vectorize(w)
+            # from (col, row, 1) to (col, row)
+            z_refactor = numpy.reshape(curve_np[cv_imgs[pic][color]], (row, col))
+            rad[color] += w_vec(cv_imgs[pic][color])*( z_refactor - math.log(exp_time[pic]) )
+            w_sum += w_vec(cv_imgs[pic][color])
+            print 'processing color ' , color , ', pic ' , pic
+
+        divide_vec = numpy.vectorize(divide)
+        rad[color] = divide_vec(rad[color] , w_sum)
+        print 'max = ', numpy.amax(rad[color])
+
 
     # merge 3 channels back
-    cv_img_result = cv2.merge(numpy_map)
+    exp_vec = numpy.vectorize(math.exp)
+    hdr = exp_vec(rad)
+    print 'hdr.shape = ', hdr.shape
+    final_img = tone_map(hdr)
+    print 'img.shape = ', final_img.shape
+    cv_img_result = cv2.merge(final_img)
     cv2.imwrite('outfile.jpg', cv_img_result)
-    return numpy_map
+    return cv_img_result
 
 
 
