@@ -58,28 +58,9 @@ def tone_map(imgs):
 
 ### solve non-linear curve
 ### images should be in path with jpg format
-def solveCurve(path):
-    exp_time = [] 
-    cv_imgs = []
-    num = 0
-
-    ### load images to cv format
-    for imgName in glob.glob(path+'/*.jpg'):
-        img = Image.open(imgName)
-        cv_img = cv2.imread(imgName)
-
-        ### split b, g ,r 
-        cv_imgs.append(cv2.split(cv_img))
-
-        ### extract exposure time
-        imgInfo = img._getexif();
-        for tag, value in imgInfo.items():
-            if( tag == 33434 ):
-                exp_time.append(value[0]/float(value[1]))
-                break
-
-        num = num + 1
-    
+def solveCurve( cv_imgs, exp_time):
+    num = len(cv_imgs)
+   
     ### empty matrix
     result = [ numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)) ]
     tmp = numpy.zeros((256+points, 1))
@@ -118,27 +99,9 @@ def solveCurve(path):
     return result[0:3][0:255] 
 
 ### using reconstruct curve
-def radianceMap(path, curve):
-    exp_time = [] 
-    cv_imgs = []
-    num = 0
+def radianceMap(cv_imgs, exp_time, curve):
+    num = len(cv_imgs)
 
-    ### load images to cv format
-    for imgName in glob.glob(path+'/*.jpg'):
-        img = Image.open(imgName)
-        cv_img = cv2.imread(imgName)
-
-        ### split b, g ,r 
-        cv_imgs.append(cv2.split(cv_img))
-
-        ### extract exposure time]
-        imgInfo = img._getexif();
-        for tag, value in imgInfo.items():
-            if( tag == 33434 ):
-                exp_time.append(value[0]/float(value[1]))
-                break
-
-        num = num + 1
     print 'cv_imgs.shape = ' , ( len(cv_imgs), len(cv_imgs[0]), len(cv_imgs[0][0]), len(cv_imgs[0][0][0]))
     row = len(cv_imgs[0][0])
     col = len(cv_imgs[0][0][0])
