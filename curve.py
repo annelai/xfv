@@ -165,11 +165,45 @@ def radianceMap(path, curve):
     exp_vec = numpy.vectorize(math.exp)
     hdr = exp_vec(rad)
     print 'hdr.shape = ', hdr.shape
-    final_img = tone_map(hdr)
+    final_img = tone_map(rad)
     print 'img.shape = ', final_img.shape
     cv_img_result = cv2.merge(final_img)
     cv2.imwrite('outfile.jpg', cv_img_result)
-    return cv_img_result
+    return rad, cv_img_result 
+
+
+### tone mapping(Photographic)
+def Photo_tone(rad):
+    
+    ### key
+    key = 0.18
+    phi = 1
+    ### size of gaussian blur
+    g_w = 101
+    g_h = 101
+    ### threshold
+    eps = 100
+
+    for color in [0, 1, 2]:
+        row = len(rad[color][0])
+        col = len(rad[color][0][0])
+        lum_avg = numpy.sum(rad[color])/ (row*col)
+        lum = rad[color]*key/lum_avg
+
+        ### blur size parameter
+        alpha_1 = 1
+        alpha_2 = 0.3
+
+
+        ### result V
+        v_result = numpy.zeros((row, col))
+        for r in range(row):
+            for c in range(col):
+                cur_win = numpy.zeros((g_h, g_w))
+                
+                
+
+
 
 
 
