@@ -9,7 +9,7 @@ import math
 import time
 
 ### for plotting
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 points = 100 ### points in each images
 point = []   ### point coordinate
@@ -165,19 +165,4 @@ def Photo_tone(rad):
                 cur_win = numpy.zeros((g_h, g_w))
                 
                 
-
-
-
-
-
-### main function 
-if( len(sys.argv) != 2 ) :
-    print 'solveCurve <image path>'
-    quit()
-
-result = solveCurve(str(sys.argv[1]))
-radianceMap(str(sys.argv[1]), result)
-
-### end main
-       
 

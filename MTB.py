@@ -1,6 +1,7 @@
 import cv2
 import cv
 import numpy as np
+from PIL import Image
 
 def diff(a, b, bias_x, bias_y, l):
     cost = 0.0
@@ -19,12 +20,20 @@ def align(num_frame, ref_frame, level):
     #----- Load Image
     img = []
     img_Y = []
+    exp_time = []
     for idx in range(1,num_frame+1):
         if idx < 10:
             filename = 'exposures/img0' + str(idx) + '.jpg'
         else:
             filename = 'exposures/img' + str(idx) + '.jpg'
-        image = cv2.imread(filename)
+        im = Image.open(filename)
+        imgInfo = im._getexif();
+        for tag, value in imgInfo.items():
+            if( tag == 33434 ):
+                exp_time.append(value[0]/float(value[1]))
+                break
+        image = np.array(im)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         img.append(image)
     #   cv2.namedWindow("I")
     #   cv2.imshow("I", image)
@@ -129,22 +138,29 @@ def align(num_frame, ref_frame, level):
             for row in range(rows):
                 for col in range(cols):
                     if row-direc[0] >= rows or row-direc[0] < 0 or col-direc[1] >= cols or col-direc[1] < 0:
-                        img_BW[idx][row,col] = 255;
+                        img_BW[idx][row,col] = 0
+                        for color in range(3):
+                            img[idx][row,col][color] = 0
                     else:
                         img_BW[idx][row,col] = img_BW[idx][row-direc[0],col-direc[1]]
+                        for color in range(3):
+                            img[idx][row,col][color] = img[idx][row-direc[0],col-direc[1]][color]
         
         # Write aligned image into JPG file
         if idx+1 > 9:
             filename = 'align_img' + str(idx+1) + '.jpg'
         else:
             filename = 'align_img0' + str(idx+1) + '.jpg'
-        cv2.imwrite(filename, img_BW[idx])
+        cv2.imwrite(filename, img[idx])
     #   cv2.namedWindow("alignment")
     #   cv2.imshow("alignment", image)
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
+    img = np.array(img)
+    return (img[:,:,:,0], img[:,:,:,1], img[:,:,:,2]), exp_time
+
 def main():
-    align(10, 5, 5)
+    img, exp_time = align(10, 5, 5)
 
 if __name__ == '__main__':
     main()
