@@ -146,6 +146,8 @@ def Photo_tone(rad):
     g_h = 101
     ### threshold
     eps = 100
+    ### max itr
+    max_itr = 10
 
     for color in [0, 1, 2]:
         row = len(rad[color][0])
@@ -160,24 +162,54 @@ def Photo_tone(rad):
 
         ### result V
         v_result = numpy.zeros((row, col))
+        l_d = [] ### final result
         for r in range(row):
             for c in range(col):
+                r_win_start = 0
+                r_win_end = g_h-1
+                c_win_start = 0
+                c_win_start = g_w-1
                 cur_win = numpy.zeros((g_h, g_w))
+                ### boundary
+                r_pic_start = r-(g_h-1)/2
+                c_pic_start = c-(g_w-1)/2
+                r_pic_end = r+(g_h-1)/2
+                c_pic_end = c+(g_w-1)/2
+
+                ### check bound
+                if r < (g_h-1)/2:
+                    r_win_start = (g_h-1)/2 - r
+                if (row-r) < (g_h-1)/2
+                    r_win_end = (row-r) + (g_h-1)/2
+                if r_pic_start < 0:
+                    r_pic_start = 0
+                if r_pic_end > row-1:
+                    r_pic_end = row-1
+                if c_pic_start < 0:
+                    c_pic_start = 0
+                if c_pic_end > col-1:
+                    c_pic_end = col-1
+
+                cur_win[r_win_start:r_win_end, c_win_start:c_win_end] = lum[r_pic_start:r_pic_end, c_pic_start:c_pic_end]
+                sigma = 1
+                for itr in range(max_itr):
+                    V1_gaussian = cv2.GaussianBlur(cur_win, [g_w, g_h], sigma*alpha1)
+                    V2_guassian = cv2.GaussianBlur(cur_win, [g_w, g_h], sigma*alpha2)
+                    V1 = numpy.sum(V1_gaussian)
+                    V2 = numpy.sum(V2_gaussian)
+                    tmp_V = (V1-V2)/ ((2**phi)/sigma**2 + V1)
+                    v_resut[r,c] = V1
+                    if abs(tmp_V) < eps:
+                        break
+                
+        l_d[color] = lum/(1+V1)
+        l_d[color] = l_d[color]*255
+        cv2.imwrite('result.jpg', l_d[color])
+
                 
                 
 
 
 
 
-
-### main function 
-if( len(sys.argv) != 2 ) :
-    print 'solveCurve <image path>'
-    quit()
-
-result = solveCurve(str(sys.argv[1]))
-radianceMap(str(sys.argv[1]), result)
-
-### end main
-       
 
