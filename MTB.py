@@ -157,7 +157,10 @@ def align(num_frame, ref_frame, level):
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
     img = np.array(img)
-    return (img[:,:,:,0], img[:,:,:,1], img[:,:,:,2]), exp_time
+    img = np.swapaxes(img, 2,3)
+    img = np.swapaxes(img, 1,2)
+    return img , exp_time
+
 
 def main():
     img, exp_time = align(10, 5, 5)

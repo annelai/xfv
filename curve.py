@@ -60,6 +60,7 @@ def tone_map(imgs):
 ### images should be in path with jpg format
 def solveCurve( cv_imgs, exp_time):
     num = len(cv_imgs)
+    print 'solving curve using ', num, ' pics..., points = ', points, ' lambda = ', smoothness
    
     ### empty matrix
     result = [ numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)), numpy.zeros((256+points, 1)) ]
@@ -72,11 +73,11 @@ def solveCurve( cv_imgs, exp_time):
         for pic in range(0, num):
             for idx, pt in enumerate(point):
                 z = cv_imgs[pic][color][pt[0]][pt[1]]
-                print pic, color, pt, z
+                #print pic, color, pt, z
                 weight = math.sqrt(w(z))
                 mat_a[pic*points+idx][z] = weight
                 mat_a[pic*points+idx][256+idx] = -1*weight
-                print exp_time[pic]
+                #print exp_time[pic]
                 mat_b[pic*points+idx][0] = weight*math.log(exp_time[pic])
 
         ### g(127) = 0
@@ -92,7 +93,7 @@ def solveCurve( cv_imgs, exp_time):
 
 
         
-    print result[1][0:255], result[1][127:128]
+    #print result[1][0:255], result[1][127:128]
     #plt.plot(result[1][0:255], range(0, 255), 'ro')
     #plt.show()
 
