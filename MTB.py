@@ -23,9 +23,9 @@ def align(num_frame, ref_frame, level):
     exp_time = []
     for idx in range(1,num_frame+1):
         if idx < 10:
-            filename = 'exposures/img0' + str(idx) + '.jpg'
+            filename = 'Memorial_SourceImages/memorial0' + str(idx) + '.png'
         else:
-            filename = 'exposures/img' + str(idx) + '.jpg'
+            filename = 'exposures/memorial' + str(idx) + '.png'
         im = Image.open(filename)
         imgInfo = im._getexif();
         for tag, value in imgInfo.items():
@@ -159,6 +159,8 @@ def align(num_frame, ref_frame, level):
     img = np.array(img)
     img = np.swapaxes(img, 2,3)
     img = np.swapaxes(img, 1,2)
+#aligned_img = Image.open(filename)
+#   aligned_img.save(filename, exif=imgInfo)
     return img , exp_time
 
 
