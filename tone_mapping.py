@@ -122,7 +122,7 @@ def reduce_contrast(E, Y, log_Y, bf, contrast):
     output[:, :, 2] = E[2]*bf_reduce
     return output
 
-def tone_map(E, orig_img, radius, sigma_r, bf_method, filename):
+def tone_map(E, radius, sigma_r, bf_method, filename):
     sigma_s = initGsGaussian(radius)
     gs_kernel = GsGaussian(radius, sigma_s)
     Y, log_Y, bf = bf_method(E, radius, gs_kernel, sigma_r)

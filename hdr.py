@@ -21,5 +21,5 @@ bf_output = 'bilateral_HDR.jpg'
 
 img, exp_time = align(num_frame, ref_frame, level)
 result = solveCurve(img, exp_time)
-E, orig_img = radianceMap(img, exp_time, result)
-bilateral_filter(E, orig_img, radius, sigma_r, direct_BF, bf_output)
+E = radianceMap(img, exp_time, result)
+tone_map(E, radius, sigma_r, direct_BF, bf_output)
