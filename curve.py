@@ -133,37 +133,118 @@ def radianceMap(cv_imgs, exp_time, curve):
     print 'img.shape = ', final_img.shape
     cv_img_result = cv2.merge(final_img)
     cv2.imwrite('outfile.jpg', cv_img_result)
-    return rad, cv_img_result 
+    return hdr, cv_img_result 
 
 
 ### tone mapping(Photographic)
-def Photo_tone(rad):
+def Photo_tone(img_bgr):
+    print 'starting tone mapping...'
+    print img_bgr.shape
+
+    ### img_bgr is ln E
+
+    ### convert BGR to Yxy
+    X = 0.412453*img_bgr[2] + 0.357580*img_bgr[1] + 0.180423*img_bgr[0]
+    Y = 0.212671*img_bgr[2] + 0.715160*img_bgr[1] + 0.072169*img_bgr[0]
+    Z = 0.019334*img_bgr[2] + 0.119193*img_bgr[1] + 0.950227*img_bgr[0]
+    img_xyz = numpy.array([X, Y, Z])
+    W = img_xyz[0] + img_xyz[1] + img_xyz[2]
+    img_yxy = numpy.array( [img_xyz[1], img_xyz[0]/W, img_xyz[1]/W] )
+
+    print img_xyz.shape
+    print img_yxy.shape
+    lum = img_yxy[0]
+    vec_exp = numpy.vectorize(math.exp)
+    lum_exp = vec_exp(lum)
     
     ### key
     key = 0.18
-    phi = 1
+    phi = 8
     ### size of gaussian blur
-    g_w = 101
-    g_h = 101
+    g_w = 31 
+    g_h = 31 
     ### threshold
-    eps = 100
+    eps = 0.5
+    ### max itr
+    max_itr = 8
 
-    for color in [0, 1, 2]:
-        row = len(rad[color][0])
-        col = len(rad[color][0][0])
-        lum_avg = numpy.sum(rad[color])/ (row*col)
-        lum = rad[color]*key/lum_avg
+    row = len(img_bgr[0])
+    col = len(img_bgr[0][0])
 
-        ### blur size parameter
-        alpha_1 = 1
-        alpha_2 = 0.3
+    ### scale to mid tone
+    lum_avg = math.exp(numpy.sum(lum) / (row*col))
+    lum_exp = lum_exp*key/lum_avg
 
 
-        ### result V
-        v_result = numpy.zeros((row, col))
-        for r in range(row):
-            for c in range(col):
-                cur_win = numpy.zeros((g_h, g_w))
-                
-                
+    ### blur size parameter
+    alpha_1 = 0.35
+    alpha_2 = 0.51
 
+
+    ### result V
+    v_result = numpy.zeros((row, col))
+
+    for r in range(row):
+        for c in range(col):
+            r_win_start = 0
+            r_win_end = g_h
+            c_win_start = 0
+            c_win_end = g_w
+            cur_win = numpy.zeros((g_h, g_w))
+            ### boundary
+            r_pic_start = r-(g_h-1)/2
+            c_pic_start = c-(g_w-1)/2
+            r_pic_end = r+(g_h+1)/2
+            c_pic_end = c+(g_w+1)/2
+
+            ### check bound
+            if r < (g_h-1)/2:
+                r_win_start = (g_h-1)/2 - r
+            if (row-r-1) < (g_h-1)/2:
+                r_win_end = (row-r-1) + (g_h+1)/2
+            if c < (g_w-1)/2:
+                c_win_start = (g_w-1)/2 - c
+            if (col-c-1) < (g_w-1)/2:
+                c_win_end = (col-c-1) + (g_w+1)/2
+            if r_pic_start < 0:
+                r_pic_start = 0
+            if r_pic_end > row:
+                r_pic_end = row
+            if c_pic_start < 0:
+                c_pic_start = 0
+            if c_pic_end > col:
+                c_pic_end = col
+
+
+            #print r_win_start, r_win_end, c_win_start, c_win_end
+            #print r_pic_start, r_pic_end, c_pic_start, c_pic_end
+            cur_win[r_win_start:r_win_end, c_win_start:c_win_end] = lum_exp[r_pic_start:r_pic_end, c_pic_start:c_pic_end]
+            sigma = 0.6 
+            for itr in range(max_itr):
+                V1_gaussian = cv2.GaussianBlur(cur_win, (g_w, g_h), sigma*alpha_1)
+                V2_gaussian = cv2.GaussianBlur(cur_win, (g_w, g_h), sigma*alpha_2)
+                V1 = V1_gaussian[(g_h-1)/2, (g_w-1)/2]
+                V2 = V2_gaussian[(g_h-1)/2, (g_w-1)/2]
+                tmp_V = (V1-V2)/ ((2**phi)/sigma**2 + V1)
+                v_result[r,c] = V1
+                #if itr == max_itr-1:
+                    #print 'max!!'
+                if abs(tmp_V) > eps:
+                    break
+                sigma += 1
+        #print r
+            
+    img_yxy[0] = lum_exp/(1+v_result)
+    img_yxy[0] *= 255
+    ### Yxy to BGR
+    img_xyz = numpy.array([img_yxy[1]*img_yxy[0]/img_yxy[2], img_yxy[0], (1-img_yxy[1]-img_yxy[2])*(img_yxy[1]/img_yxy[2])])
+    B =  0.055648*img_xyz[0] - 0.204043*img_xyz[1] + 1.057311*img_xyz[2]
+    G = -0.969256*img_xyz[0] + 1.875991*img_xyz[1] + 0.041556*img_xyz[2]
+    R =  3.240479*img_xyz[0] - 1.53715*img_xyz[1]  - 0.498535*img_xyz[2] 
+    img_bgr = numpy.array([B, G, R])
+    print img_bgr.shape
+
+    ### clamp image
+    img_bgr[img_bgr>255] = 255
+
+    cv2.imwrite('result.jpg', cv2.merge(img_bgr))
