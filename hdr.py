@@ -3,6 +3,7 @@ from MTB import *
 from curve import *
 from tone_mapping import *
 import timeit
+from photo_map import *
 
 #------ Main function
 # argv = image path, num_frame, ref_frame, level
@@ -22,9 +23,10 @@ bf_output = 'bilateral_HDR.jpg'
 
 img, exp_time = align(num_frame, ref_frame, level)
 result = solveCurve(img, exp_time)
-E, orig_img = radianceMap(img, exp_time, result)
+E = radianceMap(img, exp_time, result)
 Photo_tone(E)
 
+print 'time = ', timeit.default_timer()-start
 end = timeit.default_timer()
 print 'time = ', start - end
 ##bilateral_filter(E, orig_img, radius, sigma_r, direct_BF, bf_output)

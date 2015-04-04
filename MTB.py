@@ -23,9 +23,9 @@ def align(num_frame, ref_frame, level):
     exp_time = []
     for idx in range(1,num_frame+1):
         if idx < 10:
-            filename = 'Memorial_SourceImages/memorial0' + str(idx) + '.png'
+            filename = 'exposures/img' + str(idx).zfill(2) + '.jpg'
         else:
-            filename = 'exposures/memorial' + str(idx) + '.png'
+            filename = 'exposures/img' + str(idx).zfill(2) + '.jpg'
         im = Image.open(filename)
         imgInfo = im._getexif();
         for tag, value in imgInfo.items():
@@ -35,6 +35,7 @@ def align(num_frame, ref_frame, level):
         image = np.array(im)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
         img.append(image)
+    
     #   cv2.namedWindow("I")
     #   cv2.imshow("I", image)
     #   cv2.waitKey(0)
@@ -47,6 +48,8 @@ def align(num_frame, ref_frame, level):
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
     
+    print "warning!!!, skipping align!"
+    return img, exp_time
     print 'Finding median thresholding value...'
     #----- Median thresholding
     threshold = []
