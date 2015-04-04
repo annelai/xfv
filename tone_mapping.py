@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 
 def initGsGaussian(r):
-    sigma_s = r/3*1.0
+    sigma_s = 15
+#sigma_s = r/3*1.0
 #gs_kernel = {}
 #for x in range(0, 2*r+1):
 #for y in range(0, 2*r+1):
@@ -70,12 +71,12 @@ def direct_BF(E, orig_img, r, gs_kernel, sigma_r):
 '''
 def direct_BF(E, r, gs_kernel, sigma_r):
     # E[0],[1],[2]: b,g,r
-    rows, cols, ch = E[0].shape
+    E = np.exp(E)
+    rows, cols = E[0].shape
     Y = np.zeros((rows,cols))
     Y = 0.114*E[0] + 0.587*E[1] + 0.299*E[2]
-    log_Y = math.log(I)
+    log_Y = np.log10(Y)
     bf = np.zeros((rows,cols))
-    gr_kernel = np.vectorize(math.exp)
     for row in range(rows):
         for col in range(cols):
             y_begin = max(0, row-r)
@@ -101,32 +102,46 @@ def direct_BF(E, r, gs_kernel, sigma_r):
                 Gs = gs_kernel[0:(2*r+1), 0:(r+cols-col)]
             else:
                 Gs = gs_kernel[0:(2*r+1), (r-col):(2*r+1)]
-            wacc = Gs*gr_kernel(-0.5*tmp_luma/sigma_r/sigma_r)
+            wacc = Gs*np.exp(-0.5*tmp_luma/sigma_r/sigma_r)
             acc_luma = np.sum(wacc*log_Y[y_begin:y_end, x_begin:x_end]) 
             wacc = np.sum(wacc)
             bf[row, col] = float(acc_luma)/float(wacc)
     return Y, log_Y, bf
 
+#def clamp(min_value, max_value, x):
+#    return max(min(x, max_value), min_value)
+
 def reduce_contrast(E, Y, log_Y, bf, contrast):
-    detail = float(log_Y) - float(bf)
+    print 'lg E', E
+    E = np.exp(E)
+    detail = log_Y - bf
     min_intensity = np.amin(bf)
     max_intensity = np.amax(bf)
+    print 'min', min_intensity
+    print 'max', max_intensity
     delta = max_intensity - min_intensity
-    gamma = math.log(contrast) / delta
-    bf_reduce = math.exp(gamma*log(bf) + detail)
-    bf_reduce = bf_reduce/Y
+    gamma = math.log10(contrast) / delta
+    bf_reduce = np.power(10, gamma*bf + detail)/Y
+    print bf_reduce
     rows, cols = Y.shape
     output = np.zeros((rows, cols, 3))
-    output[:, :, 0] = E[0]*bf_reduce
-    output[:, :, 1] = E[1]*bf_reduce
-    output[:, :, 2] = E[2]*bf_reduce
+    scale_factor = 1.0/pow(10, max_intensity*gamma)
+    print 'scale_factor', scale_factor
+    print 'E', E
+#clamp = np.vectorize(max(min(x, 255.0), 0.0))
+    output[:, :, 0] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
+    output[:, :, 1] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
+    output[:, :, 2] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
+#    output[:, :, 0] = E[0]*bf_reduce*scale_factor
+#    output[:, :, 1] = E[1]*bf_reduce*scale_factor
+#    output[:, :, 2] = E[2]*bf_reduce*scale_factor
     return output
 
 def tone_map(E, radius, sigma_r, bf_method, filename):
     sigma_s = initGsGaussian(radius)
     gs_kernel = GsGaussian(radius, sigma_s)
     Y, log_Y, bf = bf_method(E, radius, gs_kernel, sigma_r)
-    output = reduce_contrast(E, Y, log_Y, bf, 5)
+    output = reduce_contrast(E, Y, log_Y, bf, 50)
     cv2.imwrite(filename, output)
     
     
