@@ -34,7 +34,7 @@ def divide(rad, w_sum):
     if w_sum == 0:
         return rad
     return rad/w_sum
-
+'''
 ### simple tone mapping
 def tone_map(img):
     ### from (min, max) -> (0, max-min)
@@ -50,7 +50,7 @@ def tone_map(img):
     print 'min = ', min_val, 'max = ', max_val
     print 'after: min = ', numpy.amin(img), ', max = ', numpy.amax(img)
     return numpy.array(img) 
-    
+''' 
 
 
 ### solve non-linear curve
@@ -109,7 +109,7 @@ def solveCurve( cv_imgs, exp_time):
     #plt.plot(result[2][0:255], 'ro')
     #plt.show()
 
-    return result[0:3][0:255] 
+    return result[0:3][0:256] 
 
 ### using reconstruct curve
 def radianceMap(cv_imgs, exp_time, curve):
@@ -141,16 +141,18 @@ def radianceMap(cv_imgs, exp_time, curve):
 
 
     ### merge 3 channels back
-    exp_vec = numpy.vectorize(math.exp)
-    hdr = exp_vec(rad)
+    hdr = numpy.exp(rad)
     print 'hdr.shape = ', hdr.shape
-    final_img = tone_map(rad)
+    print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
+    print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
+    print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
+    #final_img = tone_map(rad)
     #print 'img.shape = ', final_img.shape
-    cv_img_result = cv2.merge(final_img)
-    cv2.imwrite('outfile.jpg', cv_img_result)
+    #cv_img_result = cv2.merge(final_img)
+    #cv2.imwrite('outfile.jpg', cv_img_result)
     return hdr
 
-
+'''
 ### tone mapping(Photographic)
 def Photo_tone2(img_bgr):
     print 'starting tone mapping...'
@@ -267,3 +269,4 @@ def Photo_tone2(img_bgr):
     img_bgr[2] *= 0.8
 
     cv2.imwrite('result.jpg', cv2.merge(img_bgr))
+'''

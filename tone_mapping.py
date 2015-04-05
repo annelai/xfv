@@ -25,56 +25,10 @@ def GsGaussian(r, sigma_s):
             gs_kernel[row, col] = math.exp(-0.5*((row-r)*(row-r)+(col-r)*(col-r))/sigma_s/sigma_s)
     return gs_kernel
 
-'''
-def direct_BF(E, orig_img, r, gs_kernel, sigma_r):
-    # E[0],[1],[2]: b,g,r
-    rows, cols, ch = orig_img.shape
-    bf = np.zeros((rows,cols,3))
-    gr_kernel = np.vectorize(math.exp)
-    for row in range(rows):
-        for col in range(cols):
-            y_begin = max(0, row-r)
-            y_end = min(rows, row+r+1)
-            x_begin = max(0, col-r)
-            x_end = min(cols, col+r+1)
-            tmp_r = np.square( E[2][y_begin:y_end, x_begin:x_end] - E[2][row, col] )
-            tmp_g = np.square( E[1][y_begin:y_end, x_begin:x_end] - E[1][row, col] )
-            tmp_b = np.square( E[0][y_begin:y_end, x_begin:x_end] - E[0][row, col] )
-            tmp = tmp_r + tmp_g + tmp_b
-            if (row-r >= 0 and row+r <= rows-1 and col-r >= 0 and col+r <= cols-1):
-                Gs = gs_kernel[:,:]
-            elif(row-r < 0 and col-r < 0):
-                Gs = gs_kernel[(r-row):(2*r+1), (r-col):(2*r+1)]
-            elif (row-r < 0 and col+r > cols-1):
-                Gs = gs_kernel[(r-row):(2*r+1), 0:(r+cols-col)] 
-            elif (row-r < 0):
-                Gs = gs_kernel[(r-row):(2*r+1), 0:(2*r+1)]
-            elif (row+r > rows-1 and col-r < 0):
-                Gs = gs_kernel[0:(r+rows-row), (r-col):(2*r+1)]
-            elif (row+r > rows-1 and col+r > cols-1):
-                Gs = gs_kernel[0:(r+rows-row), 0:(r+cols-col)]
-            elif (row+r > rows-1):
-                Gs = gs_kernel[0:(r+rows-row), 0:(2*r+1)]
-            elif (col+r > cols-1):
-                Gs = gs_kernel[0:(2*r+1), 0:(r+cols-col)]
-            else:
-                Gs = gs_kernel[0:(2*r+1), (r-col):(2*r+1)]
-            wacc = Gs*gr_kernel(-0.5*tmp/sigma_r/sigma_r/3)
-            acc_r = np.sum(wacc*E[y_begin:y_end, x_begin:x_end, 2])
-            acc_g = np.sum(wacc*E[y_begin:y_end, x_begin:x_end, 1])
-            acc_b = np.sum(wacc*E[y_begin:y_end, x_begin:x_end, 0])
-            wacc = np.sum(wacc)
-            bf[row, col, 0] = float(acc_b)/float(wacc)
-            bf[row, col, 1] = float(acc_g)/float(wacc)
-            bf[row, col, 2] = float(acc_r)/float(wacc)
-    return bf
-'''
 def direct_BF(E, r, gs_kernel, sigma_r):
     # E[0],[1],[2]: b,g,r
-    E = np.exp(E)
     rows, cols = E[0].shape
-    Y = np.zeros((rows,cols))
-    Y = 0.114*E[0] + 0.587*E[1] + 0.299*E[2]
+    Y = (E[0] + 40*E[1] + 20*E[2])/61.0
     log_Y = np.log10(Y)
     bf = np.zeros((rows,cols))
     for row in range(rows):
@@ -108,12 +62,7 @@ def direct_BF(E, r, gs_kernel, sigma_r):
             bf[row, col] = float(acc_luma)/float(wacc)
     return Y, log_Y, bf
 
-#def clamp(min_value, max_value, x):
-#    return max(min(x, max_value), min_value)
-
 def reduce_contrast(E, Y, log_Y, bf, contrast):
-    print 'lg E', E
-    E = np.exp(E)
     detail = log_Y - bf
     min_intensity = np.amin(bf)
     max_intensity = np.amax(bf)
@@ -127,14 +76,13 @@ def reduce_contrast(E, Y, log_Y, bf, contrast):
     output = np.zeros((rows, cols, 3))
     scale_factor = 1.0/pow(10, max_intensity*gamma)
     print 'scale_factor', scale_factor
-    print 'E', E
-#clamp = np.vectorize(max(min(x, 255.0), 0.0))
+    print 'save', 255*E[0]*bf_reduce*scale_factor
     output[:, :, 0] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
-    output[:, :, 1] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
-    output[:, :, 2] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
-#    output[:, :, 0] = E[0]*bf_reduce*scale_factor
-#    output[:, :, 1] = E[1]*bf_reduce*scale_factor
-#    output[:, :, 2] = E[2]*bf_reduce*scale_factor
+    output[:, :, 1] = (255.0*np.power(E[1]*bf_reduce*scale_factor, 1.0/2.2))
+    output[:, :, 2] = (255.0*np.power(E[2]*bf_reduce*scale_factor, 1.0/2.2))
+#    output[:, :, 0] = 255*E[0]*bf_reduce*scale_factor*1.2
+#    output[:, :, 1] = 255*E[1]*bf_reduce*scale_factor*1.2
+#    output[:, :, 2] = 255*E[2]*bf_reduce*scale_factor*1.2
     return output
 
 def tone_map(E, radius, sigma_r, bf_method, filename):

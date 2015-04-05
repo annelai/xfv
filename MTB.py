@@ -48,7 +48,7 @@ def align(num_frame, ref_frame, level):
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
     
-    print "warning!!!, skipping align!"
+    print "warning!!! skipping align!"
     return img, exp_time
     print 'Finding median thresholding value...'
     #----- Median thresholding
@@ -162,7 +162,7 @@ def align(num_frame, ref_frame, level):
     img = np.array(img)
     img = np.swapaxes(img, 2,3)
     img = np.swapaxes(img, 1,2)
-#aligned_img = Image.open(filename)
+#   aligned_img = Image.open(filename)
 #   aligned_img.save(filename, exif=imgInfo)
     return img , exp_time
 
