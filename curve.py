@@ -25,7 +25,9 @@ smoothness = math.sqrt(1000)  ### curve smoothness
 ### weight function 
 def w(z):
     if z<0 : return 0
+    if z==0 : return 0.01
     if z>255 : return 255
+    if z==255: return 0.01
     if z>128 : return 255-z
     return z
 
@@ -36,14 +38,14 @@ def divide(rad, w_sum):
     return rad/w_sum
 
 ### simple tone mapping
-def tone_map(img):
+def tone_map(img, m_val):
     ### from (min, max) -> (0, max-min)
     min_val = numpy.amin(img)
     img -= min_val
     ### from (0, max-min) -> (0, 255)
     max_val = numpy.amax(img)
     img /= max_val 
-    img *= 255
+    img *= m_val 
     ### truncate to int
     img.astype(numpy.int64)
 
@@ -108,8 +110,9 @@ def solveCurve( cv_imgs, exp_time):
     #plt.show()
     #plt.plot(result[2][0:255], 'ro')
     #plt.show()
+    print result[0][255]
 
-    return result[0:3][0:255] 
+    return result[0:3][0:256] 
 
 ### using reconstruct curve
 def radianceMap(cv_imgs, exp_time, curve):
@@ -135,6 +138,7 @@ def radianceMap(cv_imgs, exp_time, curve):
             w_sum += w_vec(cv_imgs[pic][color])
             print 'processing color ' , color , ', pic ' , pic
 
+        #pdb.set_trace()
         divide_vec = numpy.vectorize(divide)
         rad[color] = divide_vec(rad[color] , w_sum)
         print 'max = ', numpy.amax(rad[color])
@@ -144,7 +148,7 @@ def radianceMap(cv_imgs, exp_time, curve):
     exp_vec = numpy.vectorize(math.exp)
     hdr = exp_vec(rad)
     print 'hdr.shape = ', hdr.shape
-    final_img = tone_map(rad)
+    final_img = tone_map(rad, 255)
     #print 'img.shape = ', final_img.shape
     cv_img_result = cv2.merge(final_img)
     cv2.imwrite('outfile.jpg', cv_img_result)
