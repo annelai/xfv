@@ -150,7 +150,7 @@ def radianceMap(cv_imgs, exp_time, curve):
     print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
     print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
     print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
-    final_img = tone_map(rad, 255)
+    #final_img = tone_map(rad, 255)
     #print 'img.shape = ', final_img.shape
     #cv_img_result = cv2.merge(final_img)
     #cv2.imwrite('outfile.jpg', cv_img_result)
