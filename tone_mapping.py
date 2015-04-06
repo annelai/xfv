@@ -26,6 +26,7 @@ def GsGaussian(r, sigma_s):
     return gs_kernel
 
 def direct_BF(E, r, gs_kernel, sigma_r):
+    print 'calculating BF...'
     # E[0],[1],[2]: b,g,r
     rows, cols = E[0].shape
     Y = (E[0] + 40*E[1] + 20*E[2])/61.0
@@ -60,9 +61,11 @@ def direct_BF(E, r, gs_kernel, sigma_r):
             acc_luma = np.sum(wacc*log_Y[y_begin:y_end, x_begin:x_end]) 
             wacc = np.sum(wacc)
             bf[row, col] = float(acc_luma)/float(wacc)
+    print 'max ', np.amax(bf), ', avg ', np.average(bf)
     return Y, log_Y, bf
 
 def reduce_contrast(E, Y, log_Y, bf, contrast):
+    print 'reducing contrast...'
     detail = log_Y - bf
     min_intensity = np.amin(bf)
     max_intensity = np.amax(bf)
@@ -70,22 +73,32 @@ def reduce_contrast(E, Y, log_Y, bf, contrast):
     print 'max', max_intensity
     delta = max_intensity - min_intensity
     gamma = math.log10(contrast) / delta
+    print gamma
     bf_reduce = np.power(10, gamma*bf + detail)/Y
     print bf_reduce
     rows, cols = Y.shape
     output = np.zeros((rows, cols, 3))
+    # modified!!
+    #######
+    #img_bgr = E*bf_reduce
+    #max_val = np.amax(img_bgr)
     scale_factor = 1.0/pow(10, max_intensity*gamma)
+    ########
+    #scale_factor = 1.0/pow(10, max_intensity*gamma)
+    ########
     print 'scale_factor', scale_factor
     print 'save', 255*E[0]*bf_reduce*scale_factor
     output[:, :, 0] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
     output[:, :, 1] = (255.0*np.power(E[1]*bf_reduce*scale_factor, 1.0/2.2))
     output[:, :, 2] = (255.0*np.power(E[2]*bf_reduce*scale_factor, 1.0/2.2))
+    output[output>255] = 255
 #    output[:, :, 0] = 255*E[0]*bf_reduce*scale_factor*1.2
 #    output[:, :, 1] = 255*E[1]*bf_reduce*scale_factor*1.2
 #    output[:, :, 2] = 255*E[2]*bf_reduce*scale_factor*1.2
     return output
 
 def tone_map(E, radius, sigma_r, bf_method, filename):
+    print 'start tone mapping...'
     sigma_s = initGsGaussian(radius)
     gs_kernel = GsGaussian(radius, sigma_s)
     Y, log_Y, bf = bf_method(E, radius, gs_kernel, sigma_r)

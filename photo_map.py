@@ -1,14 +1,14 @@
 import cv2
 import numpy
 import math
-from curve import tone_map
+import curve
 import pdb
 
 
 ### threshold value
 ### result are marked by negative sign when passed threshold
 def threshold(result, delta, v1):
-    eps = 0.001
+    eps = 0.15
     if result < 0: 
         return result
     elif delta > eps:
@@ -54,14 +54,14 @@ def Photo_tone(img_bgr):
     print 'lum sum ', numpy.sum(lum)
     
     ### key
-    key = 0.18
+    key = 1.88
     phi = 8
     ### size of gaussian blur
     g_w = 41 
     g_h = 41 
     ### threshold
     ### max itr
-    max_itr = 22
+    max_itr = 12
 
     row = len(img_bgr[0])
     col = len(img_bgr[0][0])
@@ -144,7 +144,6 @@ def Photo_tone(img_bgr):
     ### test
     img_bgr = numpy.power(img_bgr, 1/1.5)
     img_bgr *= 255 
-    #img_bgr[0] *= 0.6
 
 
     cv2.imwrite('result.jpg', cv2.merge(img_bgr))

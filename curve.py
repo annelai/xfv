@@ -12,9 +12,12 @@ import pdb
 ### for plotting
 import matplotlib.pyplot as plt
 
-points = 50### points in each images
-point = numpy.loadtxt('points')   ### point coordinate
-smoothness = math.sqrt(1000)  ### curve smoothness
+
+point1 = numpy.loadtxt('points_pick')     ### point coordinate
+point2 = numpy.loadtxt('points')
+point = numpy.append(point1, point2, axis=0)
+points = len(point)                 ### points in each images
+smoothness = math.sqrt(1000000)        ### curve smoothness
 
 ### random generate points
 #for i in range(0, points):
@@ -36,9 +39,9 @@ def divide(rad, w_sum):
     if w_sum == 0:
         return rad
     return rad/w_sum
-'''
+
 ### simple tone mapping
-def tone_map(img, m_val):
+def sim_tone_map(img, m_val):
     ### from (min, max) -> (0, max-min)
     min_val = numpy.amin(img)
     img -= min_val
@@ -52,7 +55,6 @@ def tone_map(img, m_val):
     print 'min = ', min_val, 'max = ', max_val
     print 'after: min = ', numpy.amin(img), ', max = ', numpy.amax(img)
     return numpy.array(img) 
-''' 
 
 
 ### solve non-linear curve
@@ -110,7 +112,9 @@ def solveCurve( cv_imgs, exp_time):
     #plt.show()
     #plt.plot(result[2][0:255], 'ro')
     #plt.show()
-    print result[0][255]
+    #print result[0][255]
+    plt.plot(result[0][0:256], 'bo', result[1][0:256], 'go', result[2][0:256], 'ro')
+    plt.show()
 
     return result[0:3][0:256] 
 
@@ -125,11 +129,12 @@ def radianceMap(cv_imgs, exp_time, curve):
     row = len(cv_imgs[0][0])
     col = len(cv_imgs[0][0][0])
     rad = [  numpy.zeros((row, col)), numpy.zeros((row, col)), numpy.zeros((row, col)) ]
-    w_sum = numpy.zeros((row, col))
+
 
     print 'num = ', num
     for color in [0, 1, 2]:
         curve_np = numpy.asarray(curve[color])
+        w_sum = numpy.zeros((row, col))
         for pic in range(num):
             w_vec = numpy.vectorize(w)
             ### from (col, row, 1) to (col, row)
@@ -150,10 +155,10 @@ def radianceMap(cv_imgs, exp_time, curve):
     print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
     print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
     print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
-    final_img = tone_map(rad, 255)
+    final_img = sim_tone_map(hdr, 255)
     #print 'img.shape = ', final_img.shape
-    #cv_img_result = cv2.merge(final_img)
-    #cv2.imwrite('outfile.jpg', cv_img_result)
+    cv_img_result = cv2.merge(final_img)
+    cv2.imwrite('outfile.jpg', cv_img_result)
     return hdr
 
 '''
