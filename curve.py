@@ -58,8 +58,6 @@ def sim_tone_map(img, m_val):
     ### truncate to int
     img.astype(numpy.int64)
 
-    print 'min = ', min_val, 'max = ', max_val
-    print 'after: min = ', numpy.amin(img), ', max = ', numpy.amax(img)
     return numpy.array(img) 
 
 ### save HDR image
@@ -90,7 +88,6 @@ def solveCurve( cv_imgs, exp_time ):
     row_max = len(cv_imgs[0][0])
     col_max = len(cv_imgs[0][0][0])
     point = point_gen(row_max, col_max, points) 
-    print cv_imgs.shape
     print 'solving curve using ', num, ' pics..., points = ', points, ' lambda = ', smoothness
    
     ### empty matrix
@@ -104,12 +101,9 @@ def solveCurve( cv_imgs, exp_time ):
         for pic in range(0, num):
             for idx, pt in enumerate(point):
                 z = cv_imgs[pic][color][pt[0]][pt[1]]
-                #print pic, color, pt, z
                 weight = math.sqrt(w(z))
-                #weight = 1
                 mat_a[pic*points+idx][z] = weight
                 mat_a[pic*points+idx][256+idx] = -1*weight
-                #print exp_time[pic]
                 mat_b[pic*points+idx][0] = weight*math.log(exp_time[pic])
 
         ### g(127) = 0
@@ -117,12 +111,12 @@ def solveCurve( cv_imgs, exp_time ):
 
         ### for smoothness
         for smooth in range(1, 254):
-            #mat_a[num*points+smooth][smooth-1] = smoothness*w(smooth)
-            #mat_a[num*points+smooth][smooth] = -2*smoothness*w(smooth)
-            #mat_a[num*points+smooth][smooth+1] = smoothness*w(smooth)
-            mat_a[num*points+smooth][smooth-1] = smoothness
-            mat_a[num*points+smooth][smooth] = -2*smoothness
-            mat_a[num*points+smooth][smooth+1] = smoothness
+            mat_a[num*points+smooth][smooth-1] = smoothness*w(smooth)
+            mat_a[num*points+smooth][smooth] = -2*smoothness*w(smooth)
+            mat_a[num*points+smooth][smooth+1] = smoothness*w(smooth)
+            #mat_a[num*points+smooth][smooth-1] = smoothness
+            #mat_a[num*points+smooth][smooth] = -2*smoothness
+            #mat_a[num*points+smooth][smooth+1] = smoothness
 
         err, result[color] = cv2.solve(mat_a, mat_b, result[color], cv2.DECOMP_SVD )
 
@@ -141,13 +135,11 @@ def radianceMap(cv_imgs, exp_time, curve):
     cv_imgs = numpy.array(cv_imgs, dtype='int64')
     cv_imgs = numpy.swapaxes(cv_imgs, 2, 3)
     cv_imgs = numpy.swapaxes(cv_imgs, 1, 2)
-    print 'cv_imgs.shape = ' , ( len(cv_imgs), len(cv_imgs[0]), len(cv_imgs[0][0]), len(cv_imgs[0][0][0]))
     row = len(cv_imgs[0][0])
     col = len(cv_imgs[0][0][0])
     rad = [  numpy.zeros((row, col)), numpy.zeros((row, col)), numpy.zeros((row, col)) ]
 
 
-    print 'num = ', num
     for color in [0, 1, 2]:
         curve_np = numpy.asarray(curve[color])
         curve_np = curve_np.reshape(256)
@@ -158,24 +150,15 @@ def radianceMap(cv_imgs, exp_time, curve):
             z_refactor = numpy.reshape(curve_np[cv_imgs[pic][color]], (row, col))
             rad[color] += w_vec(cv_imgs[pic][color])*( z_refactor - math.log(exp_time[pic]) )
             w_sum += w_vec(cv_imgs[pic][color])
-            print 'processing color ' , color , ', pic ' , pic
 
         divide_vec = numpy.vectorize(divide)
         rad[color] = divide_vec(rad[color] , w_sum)
-        print 'max = ', numpy.amax(rad[color])
 
 
     ### merge 3 channels back
     hdr = numpy.exp(rad)
-    print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
-    print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
-    print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
-    img_result = numpy.array(hdr, dtype='float64')
-    img_result = img_result.swapaxes(1, 2)     
-    img_result = img_result.swapaxes(0, 1)
-    #print 'img.shape = ', final_img.shape
-    #cv2.imwrite('simple_mapping.jpg', cv_img_result)
-    #cv2.imwrite('result_hdr.hdr', hdr)
-    saveHDR(img_result, 'result_hdr.hdr')
+    numpy.savetxt('hdrb', hdr[0])
+    numpy.savetxt('hdrg', hdr[1])
+    numpy.savetxt('hdrr', hdr[2])
     return hdr
 

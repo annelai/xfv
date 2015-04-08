@@ -60,7 +60,7 @@ def diff(a, b, bias_x, bias_y):
     return float(cost)/float(w)
 
 
-def align(data_set, num_frame, ref_frame, level):
+def align(data_set, ref_frame, level):
     #----- Load Image
     img = []
     img_Y = []
@@ -113,7 +113,6 @@ def align(data_set, num_frame, ref_frame, level):
     print 'Start alignment...'
     #----- Alignment
     for idx in range(len(img_BW)):
-        print 'img', idx
         if idx == ref_frame:
             continue
         rows, cols = img_BW[ref_frame].shape
