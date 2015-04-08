@@ -26,7 +26,7 @@ img, exp_time = align(num_frame, ref_frame, level)
 result = solveCurve(img, exp_time)
 E = radianceMap(img, exp_time, result)
 Photo_tone(E)
-#tone_map(E, radius, sigma_r, direct_BF, bf_output)
+tone_map(E, radius, sigma_r, direct_BF, bf_output)
 
 print 'time = ', timeit.default_timer()-start
 end = timeit.default_timer()

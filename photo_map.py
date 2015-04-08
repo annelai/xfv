@@ -8,7 +8,7 @@ import pdb
 ### threshold value
 ### result are marked by negative sign when passed threshold
 def threshold(result, delta, v1):
-    eps = 0.15
+    eps = 0.05
     if result < 0: 
         return result
     elif delta > eps:
@@ -54,14 +54,14 @@ def Photo_tone(img_bgr):
     print 'lum sum ', numpy.sum(lum)
     
     ### key
-    key = 1.88
+    key = 1.0
     phi = 8
     ### size of gaussian blur
     g_w = 41 
     g_h = 41 
     ### threshold
     ### max itr
-    max_itr = 12
+    max_itr = 6
 
     row = len(img_bgr[0])
     col = len(img_bgr[0][0])

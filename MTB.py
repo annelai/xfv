@@ -22,10 +22,7 @@ def align(num_frame, ref_frame, level):
     img_Y = []
     exp_time = []
     for idx in range(1,num_frame+1):
-        if idx < 10:
-            filename = 'exposures/img' + str(idx).zfill(2) + '.jpg'
-        else:
-            filename = 'exposures/img' + str(idx).zfill(2) + '.jpg'
+        filename = 'Dahu/data_set_7/DSC' + str(4756+idx).zfill(5) + '.JPG'
         im = Image.open(filename)
         imgInfo = im._getexif();
         for tag, value in imgInfo.items():
@@ -48,8 +45,8 @@ def align(num_frame, ref_frame, level):
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
     
-    print "warning!!! skipping align!"
-    return img, exp_time
+    # print "warning!!! skipping align!"
+    # return img, exp_time
     print 'Finding median thresholding value...'
     #----- Median thresholding
     threshold = []
@@ -159,9 +156,9 @@ def align(num_frame, ref_frame, level):
     #   cv2.imshow("alignment", image)
     #   cv2.waitKey(0)
     #   cv2.destroyAllWindows()
-    img = np.array(img)
-    img = np.swapaxes(img, 2,3)
-    img = np.swapaxes(img, 1,2)
+    #img = np.array(img)
+    #img = np.swapaxes(img, 2,3)
+    #img = np.swapaxes(img, 1,2)
 #   aligned_img = Image.open(filename)
 #   aligned_img.save(filename, exif=imgInfo)
     return img , exp_time
