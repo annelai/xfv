@@ -1,0 +1,26 @@
+Usage:
+
+    python hdr.py <num_frame> <ref_frame> <MTB_level> <radius> <sigma_s> <sigma_r> <contrast> <path_to_data>
+
+
+ref_frame:
+    reference picture in alignment
+MTB_level:
+    level in MTB algorithm
+radius:
+
+sigma_s:
+
+sigma_r:
+
+contrast:
+
+path_to_data:
+    the path to image data.
+
+
+All the input images must has file extension 'jpg', case sensitive. (.JPG is invalid)
+Only input imgaes can be inside <path_to_data>, no other files can exist.
+
+Result of two versions of tone mapping algorithm is named 'result_photo.jpg', 'result_bilateral.jpg'
+HDR output image is named 'result_hdr.hdr'
