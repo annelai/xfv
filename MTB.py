@@ -66,7 +66,7 @@ def align(data_set, ref_frame, level):
     img_Y = []
     exp_time = []
     for filename in os.listdir(data_set):
-        if filename.endswith(".JPG"):
+        if filename.endswith(".jpg"):
             im = Image.open(data_set + filename)
             imgInfo = im._getexif();
             for tag, value in imgInfo.items():

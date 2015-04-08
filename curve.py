@@ -12,20 +12,24 @@ import pdb
 ### for plotting
 import matplotlib.pyplot as plt
 
-'''
-point1 = numpy.loadtxt('points_pick')     ### point coordinate
-point2 = numpy.loadtxt('points')
-point = numpy.append(point1, point2, axis=0)
-points = len(point)                 ### points in each images
-'''
-smoothness = math.sqrt(1000000)        ### curve smoothness
-point = []
+
+#point1 = numpy.loadtxt('points_pick')     ### point coordinate
+#point2 = numpy.loadtxt('points')
+#point = numpy.append(point1, point2, axis=0)
+#points = len(point)                 ### points in each images
+
+smoothness = math.sqrt(10000)        ### curve smoothness
 points = 100
-### random generate points
-for i in range(0, points):
-    row = int(random.random()*3376)
-    col = int(random.random()*6000)
-    point.append([row,col])
+
+### random points gen
+def point_gen(r_max, c_max, points):
+    out = numpy.zeros((points, 2))
+    for i in range(points):
+         row = int(random.random()*r_max)
+         col = int(random.random()*c_max)
+         out[i] = (row, col)
+    return out
+
 
 ### weight function 
 def w(z):
@@ -66,6 +70,9 @@ def solveCurve( cv_imgs, exp_time ):
     cv_imgs = numpy.array(cv_imgs)
     cv_imgs = numpy.swapaxes(cv_imgs, 2, 3)
     cv_imgs = numpy.swapaxes(cv_imgs, 1, 2)
+    row_max = len(cv_imgs[0][0])
+    col_max = len(cv_imgs[0][0][0])
+    point = point_gen(row_max, col_max, points) 
     print cv_imgs.shape
     print 'solving curve using ', num, ' pics..., points = ', points, ' lambda = ', smoothness
    
@@ -79,7 +86,6 @@ def solveCurve( cv_imgs, exp_time ):
         mat_b = numpy.zeros((num*points+255, 1))
         for pic in range(0, num):
             for idx, pt in enumerate(point):
-                print pic, color, pt[0], pt[1]
                 z = cv_imgs[pic][color][pt[0]][pt[1]]
                 #print pic, color, pt, z
                 weight = math.sqrt(w(z))
@@ -108,13 +114,14 @@ def solveCurve( cv_imgs, exp_time ):
     plt.plot(result[0][0:256], 'bo', result[1][0:256], 'go', result[2][0:256], 'ro')
     plt.show()
 
-    return result[0:3][0:256] 
+    result = numpy.array(result)
+    return result[0:3, 0:256] 
 
 ### using reconstruct curve
 def radianceMap(cv_imgs, exp_time, curve):
     num = len(cv_imgs)
 
-    cv_imgs = numpy.array(cv_imgs)
+    cv_imgs = numpy.array(cv_imgs, dtype='int64')
     cv_imgs = numpy.swapaxes(cv_imgs, 2, 3)
     cv_imgs = numpy.swapaxes(cv_imgs, 1, 2)
     print 'cv_imgs.shape = ' , ( len(cv_imgs), len(cv_imgs[0]), len(cv_imgs[0][0]), len(cv_imgs[0][0][0]))
@@ -126,6 +133,7 @@ def radianceMap(cv_imgs, exp_time, curve):
     print 'num = ', num
     for color in [0, 1, 2]:
         curve_np = numpy.asarray(curve[color])
+        curve_np = curve_np.reshape(256)
         w_sum = numpy.zeros((row, col))
         for pic in range(num):
             w_vec = numpy.vectorize(w)
@@ -135,7 +143,6 @@ def radianceMap(cv_imgs, exp_time, curve):
             w_sum += w_vec(cv_imgs[pic][color])
             print 'processing color ' , color , ', pic ' , pic
 
-        #pdb.set_trace()
         divide_vec = numpy.vectorize(divide)
         rad[color] = divide_vec(rad[color] , w_sum)
         print 'max = ', numpy.amax(rad[color])
@@ -143,14 +150,13 @@ def radianceMap(cv_imgs, exp_time, curve):
 
     ### merge 3 channels back
     hdr = numpy.exp(rad)
-    print 'hdr.shape = ', hdr.shape
     print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
     print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
     print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
     final_img = sim_tone_map(hdr, 255)
     #print 'img.shape = ', final_img.shape
     cv_img_result = cv2.merge(final_img)
-    cv2.imwrite('simple_mapping.jpg', cv_img_result)
-    cv2.imwrite('result_hdr.hdr', hdr)
+    #cv2.imwrite('simple_mapping.jpg', cv_img_result)
+    #cv2.imwrite('result_hdr.hdr', hdr)
     return hdr
 
