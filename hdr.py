@@ -24,11 +24,14 @@ bf_output = 'bilateral_HDR_' + str(contrast) + '.jpg'
 img, exp_time = align(data_set, ref_frame, level)
 result = solveCurve(img, exp_time)
 E = radianceMap(img, exp_time, result)
-#Photo_tone(E)
+Photo_tone(E)
 # Our Bilateral Filter
 # tone_map(E, radius, sigma_s, sigma_r, direct_BF, contrast, bf_output)
 # opencv Bilateral Filter
-tone_map(E, radius, sigma_s, sigma_r, opencv_BF, contrast, bf_output)
+tone_map(E, radius, sigma_s, sigma_r, opencv_BF, 50, 'bilateral_HDR_50.jpg')
+tone_map(E, radius, sigma_s, sigma_r, opencv_BF, 100, 'bilateral_HDR_100.jpg')
+tone_map(E, radius, sigma_s, sigma_r, opencv_BF, 150, 'bilateral_HDR_150.jpg')
+tone_map(E, radius, sigma_s, sigma_r, opencv_BF, 200, 'bilateral_HDR_200.jpg')
 
 end = timeit.default_timer()
 print 'time = ', end - start
