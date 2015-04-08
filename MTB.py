@@ -8,23 +8,23 @@ def shift(I, bias_x, bias_y, l):
     shift_I = np.zeros((I.shape))
     for color in range(3):
         if bias_x==-1 and bias_y==-1:
-            shift_I[0:rows+bias_y*l, 0:cols+bias_x*l][color] = I[-bias_y*l:rows, -bias_x*l:cols][color]
+            shift_I[0:rows+bias_y*l, 0:cols+bias_x*l, color] = I[-bias_y*l:rows, -bias_x*l:cols, color]
         elif bias_x==0 and bias_y==-1:
-            shift_I[0:rows+bias_y*l ,0:cols][color] = I[-bias_y*l:rows, 0:cols][color]
+            shift_I[0:rows+bias_y*l ,0:cols, color] = I[-bias_y*l:rows, 0:cols, color]
         elif bias_x==1 and bias_y==-1:
-            shift_I[0:rows+bias_y*l, bias_x*l:cols][color] = I[-bias_y*l:rows, 0:cols-bias_x*l][color]
+            shift_I[0:rows+bias_y*l, bias_x*l:cols, color] = I[-bias_y*l:rows, 0:cols-bias_x*l, color]
         elif bias_x==-1 and bias_y==0:
-            shift_I[0:rows, 0:cols+bias_x*l][color] = I[0:rows, -bias_x*l:cols][color]
+            shift_I[0:rows, 0:cols+bias_x*l, color] = I[0:rows, -bias_x*l:cols, color]
         elif bias_x==1 and bias_y==0:
-            shift_I[0:rows, bias_x*l:cols][color] = I[0:rows, 0:cols-bias_x*l][color]
+            shift_I[0:rows, bias_x*l:cols, color] = I[0:rows, 0:cols-bias_x*l, color]
         elif bias_x==-1 and bias_y==1:
-            shift_I[bias_y*l:rows, 0:cols+bias_x*l][color] = I[0:rows-bias_y*l, -bias_x*l:cols][color]
+            shift_I[bias_y*l:rows, 0:cols+bias_x*l, color] = I[0:rows-bias_y*l, -bias_x*l:cols, color]
         elif bias_x==0 and bias_y==1:
-            shift_I[bias_y*l:rows, 0:cols][color] = I[0:rows-bias_y*l, 0:cols][color]
+            shift_I[bias_y*l:rows, 0:cols, color] = I[0:rows-bias_y*l, 0:cols, color]
         elif bias_x==1 and bias_y==1:
-            shift_I[bias_y*l:rows, bias_x*l:cols][color] = I[0:rows-bias_y*l,0:cols-bias_x*l][color]
+            shift_I[bias_y*l:rows, bias_x*l:cols, color] = I[0:rows-bias_y*l,0:cols-bias_x*l, color]
         else:
-            shift_I[:,:][color] = I[:,:][color]
+            shift_I[:,:, color] = I[:,:, color]
     return shift_I
 
 def diff(a, b, bias_x, bias_y):
@@ -131,8 +131,7 @@ def align(data_set, num_frame, ref_frame, level):
         rows, cols = img_BW[ref_frame].shape
         ref = cv2.resize(img_BW[ref_frame], (int(rows*pow(2,-(level-1))), int(cols*pow(2,-(level-1)))) )
         current = cv2.resize(img_BW[idx], (int(rows*pow(2,-(level-1))), int(cols*pow(2,-(level-1)))) )
-        for l in range(level):
-    
+        for l in range(level): 
             # top-left
             min_cost = diff(ref,current,-1,-1)
             direc = [-1,-1]
