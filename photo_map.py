@@ -125,4 +125,4 @@ def Photo_tone(img_bgr):
     img_bgr *= 255 
 
 
-    cv2.imwrite('result.jpg', cv2.merge(img_bgr))
+    cv2.imwrite('result_photo.jpg', cv2.merge(img_bgr))

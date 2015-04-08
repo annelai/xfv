@@ -62,6 +62,23 @@ def sim_tone_map(img, m_val):
     print 'after: min = ', numpy.amin(img), ', max = ', numpy.amax(img)
     return numpy.array(img) 
 
+### save HDR image
+def saveHDR(image, filename):
+    f = open(filename, "wb")
+    f.write("-Y {0} +X {1}\n".format(image.shape[0], image.shape[1]))
+
+    brightest = numpy.maximum(numpy.maximum(image[...,0], image[...,1]), image[...,2])
+    mantissa = numpy.zeros_like(brightest)
+    exponent = numpy.zeros_like(brightest)
+    numpy.frexp(brightest, mantissa, exponent)
+    scaled_mantissa = mantissa * 256.0 / brightest
+    rgbe = numpy.zeros((image.shape[0], image.shape[1], 4), dtype=numpy.uint8)
+    rgbe[...,0:3] = numpy.around(image[...,0:3] * scaled_mantissa[...,None])
+    rgbe[...,3] = numpy.around(exponent + 128)
+
+    rgbe.flatten().tofile(f)
+    f.close()
+
 
 ### solve non-linear curve
 ### images should be in path with jpg format
@@ -153,10 +170,12 @@ def radianceMap(cv_imgs, exp_time, curve):
     print 'red max/min', numpy.amax(hdr[2]), numpy.amin(hdr[2])
     print 'green max/min', numpy.amax(hdr[1]), numpy.amin(hdr[1])
     print 'blue max/min', numpy.amax(hdr[0]), numpy.amin(hdr[0])
-    final_img = sim_tone_map(hdr, 255)
+    img_result = numpy.array(hdr, dtype='float64')
+    img_result = img_result.swapaxes(1, 2)     
+    img_result = img_result.swapaxes(0, 1)
     #print 'img.shape = ', final_img.shape
-    cv_img_result = cv2.merge(final_img)
     #cv2.imwrite('simple_mapping.jpg', cv_img_result)
     #cv2.imwrite('result_hdr.hdr', hdr)
+    saveHDR(img_result, 'result_hdr.hdr')
     return hdr
 

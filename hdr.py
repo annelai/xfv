@@ -24,6 +24,7 @@ sigma_r = float(sys.argv[6])
 contrast = float(sys.argv[7])
 data_set = str(sys.argv[8])
 bf_output = 'bilateral_HDR_' + str(data_set) + '_' + str(contrast) + '.jpg'
+bf_output = 'result_bilateral.jpg'
 
 img, exp_time = align(data_set, num_frame, ref_frame, level)
 result = solveCurve(img, exp_time)
