@@ -2,22 +2,6 @@ import math
 import cv2
 import numpy as np
 
-def initGsGaussian(r):
-    sigma_s = 15
-#sigma_s = r/3*1.0
-#gs_kernel = {}
-#for x in range(0, 2*r+1):
-#for y in range(0, 2*r+1):
-#gs_kernel[x-r, y-r] = math.exp(-0.5*(x*x+y*y)/sigma_s/sigma_s)
-#return gs_kernel
-    return sigma_s
-
-#def initGrGaussian(sigma_r):
-#    gr_kernel = np.zeros(256)
-#    for i in range(0,256):
-#        gr_kernel[i] = math.exp(-0.5*i/sigma_r/sigma_r)
-#    return gr_kernel
-
 def GsGaussian(r, sigma_s):
     gs_kernel = np.zeros((2*r+1,2*r+1))
     for row in range(2*r+1):
@@ -25,7 +9,7 @@ def GsGaussian(r, sigma_s):
             gs_kernel[row, col] = math.exp(-0.5*((row-r)*(row-r)+(col-r)*(col-r))/sigma_s/sigma_s)
     return gs_kernel
 
-def direct_BF(E, r, gs_kernel, sigma_r):
+def direct_BF(E, r, gs_kernel, sigma_s, sigma_r):
     print 'calculating BF...'
     # E[0],[1],[2]: b,g,r
     rows, cols = E[0].shape
@@ -64,6 +48,15 @@ def direct_BF(E, r, gs_kernel, sigma_r):
     print 'max ', np.amax(bf), ', avg ', np.average(bf)
     return Y, log_Y, bf
 
+def opencv_BF(E, r, gs_kernel, sigma_s, sigma_r):
+    rows, cols = E[0].shape
+    Y = (E[0] + 40*E[1] + 20*E[2])/61.0
+    log_Y = np.log10(Y)
+    print 'log_Y', log_Y
+    bf = cv2.bilateralFilter(log_Y.astype(np.float32), r, sigma_r, sigma_s)
+    print 'bf', bf
+    return Y, log_Y, bf
+
 def reduce_contrast(E, Y, log_Y, bf, contrast):
     print 'reducing contrast...'
     detail = log_Y - bf
@@ -78,31 +71,18 @@ def reduce_contrast(E, Y, log_Y, bf, contrast):
     print bf_reduce
     rows, cols = Y.shape
     output = np.zeros((rows, cols, 3))
-    # modified!!
-    #######
-    #img_bgr = E*bf_reduce
-    #max_val = np.amax(img_bgr)
     scale_factor = 1.0/pow(10, max_intensity*gamma)
-    ########
-    #scale_factor = 1.0/pow(10, max_intensity*gamma)
-    ########
-    print 'scale_factor', scale_factor
-    print 'save', 255*E[0]*bf_reduce*scale_factor
     output[:, :, 0] = (255.0*np.power(E[0]*bf_reduce*scale_factor, 1.0/2.2))
     output[:, :, 1] = (255.0*np.power(E[1]*bf_reduce*scale_factor, 1.0/2.2))
     output[:, :, 2] = (255.0*np.power(E[2]*bf_reduce*scale_factor, 1.0/2.2))
     output[output>255] = 255
-#    output[:, :, 0] = 255*E[0]*bf_reduce*scale_factor*1.2
-#    output[:, :, 1] = 255*E[1]*bf_reduce*scale_factor*1.2
-#    output[:, :, 2] = 255*E[2]*bf_reduce*scale_factor*1.2
     return output
 
-def tone_map(E, radius, sigma_r, bf_method, filename):
+def tone_map(E, radius, sigma_s, sigma_r, bf_method, contrast, filename):
     print 'start tone mapping...'
-    sigma_s = initGsGaussian(radius)
     gs_kernel = GsGaussian(radius, sigma_s)
-    Y, log_Y, bf = bf_method(E, radius, gs_kernel, sigma_r)
-    output = reduce_contrast(E, Y, log_Y, bf, 50)
+    Y, log_Y, bf = bf_method(E, radius, gs_kernel, sigma_s, sigma_r)
+    output = reduce_contrast(E, Y, log_Y, bf, contrast)
     cv2.imwrite(filename, output)
     
     

@@ -2,7 +2,6 @@ import cv2
 import numpy
 import math
 import curve
-import pdb
 
 
 ### threshold value
@@ -46,12 +45,8 @@ def Photo_tone(img_bgr):
     W = img_xyz[0] + img_xyz[1] + img_xyz[2]
     img_yxy = numpy.array( [img_xyz[1], img_xyz[0]/W, img_xyz[1]/W] )
 
-    #pdb.set_trace()
-    print img_xyz.shape
-    print img_yxy.shape
     lum_exp = img_yxy[0]
     lum = numpy.log(lum_exp+1)
-    print 'lum sum ', numpy.sum(lum)
     
     ### key
     key = 1.0
@@ -70,7 +65,6 @@ def Photo_tone(img_bgr):
     lum_avg = math.exp(numpy.sum(lum) / (row*col))
     lum_exp = lum_exp*key/lum_avg
 
-    print 'midtone: avg ', lum_avg, ', lum max ', numpy.amax(lum_exp)
 
 
     ### blur size parameter
@@ -90,8 +84,6 @@ def Photo_tone(img_bgr):
         V2_gaussian[itr] = cv2.GaussianBlur(lum_exp, (g_w, g_h), sigma*alpha_2)
         delta_V[itr] = (V1_gaussian[itr]-V2_gaussian[itr])/ ((2**phi)/sigma**2 + V1_gaussian[itr])
         sigma *= 1.1
-        #alpha_1 *= 1.1
-        #alpha_2 *= 1.1
             
         print "itr ", itr, 'V1max ', numpy.amax(V1_gaussian[itr]), \
                 'V2Max', numpy.amax(V2_gaussian[itr]), 'delMax', \
@@ -113,29 +105,16 @@ def Photo_tone(img_bgr):
             
 
     ### lower constrast
-    #lum_exp *= 10
-    #v_result *= 10
     img_yxy[0] = lum_exp/(1+v_result)
-    #img_yxy[0] = tone_map(img_yxy[0], 1) 
-    #img_yxy[0] *= 255/numpy.average(img_yxy[0])
-    #tmp = img_yxy[0]
-    #tmp[tmp>1] = 1
-    #img_yxy[0] = tmp 
 
     ### Yxy to BGR
-    for i in range(3):
-        print 'Yxy max ', numpy.amax(img_yxy[i]), numpy.average(img_yxy[i])
     img_xyz = numpy.array([img_yxy[1]*img_yxy[0]/img_yxy[2], img_yxy[0], (1-img_yxy[1]-img_yxy[2])*(img_yxy[0]/img_yxy[2])])
-    for i in range(3):
-        print 'XYZ max ', numpy.amax(img_xyz[i]), numpy.average(img_xyz[i])
     B =  0.005298*img_xyz[0] - 0.014695*img_xyz[1] + 1.009397*img_xyz[2]
     G = -0.513885*img_xyz[0] + 1.425304*img_xyz[1] + 0.088581*img_xyz[2]
     R =  2.370674*img_xyz[0] - 0.900041*img_xyz[1] - 0.470634*img_xyz[2] 
     img_bgr = numpy.array([B, G, R])
-    #img_bgr = numpy.power(img_bgr,1/1.6)
     for i in range(3):
         print 'BGR max ', numpy.amax(img_bgr[i]), numpy.average(img_bgr[i])
-    #print img_bgr.shape
 
     ### clamp image
     img_bgr[img_bgr>1] = 1 
